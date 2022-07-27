@@ -5,18 +5,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 public class MovieTheatreController {
-    private MovieTheatre movieTheatre;
+    private final MovieTheatre movieTheatre = new MovieTheatre();
     private List<Ticket> ticketList = new ArrayList<>();
+    private Stats stats = new Stats(movieTheatre.getTotal_columns() * movieTheatre.getTotal_rows());
 
     public MovieTheatreController() {
-        this.movieTheatre = new MovieTheatre();
     }
 
     @GetMapping("/seats")
@@ -38,6 +35,9 @@ public class MovieTheatreController {
         movieTheatre.getAvailable_seats().remove(purchased);
         Ticket ticket = new Ticket(purchased);
         ticketList.add(ticket);
+        stats.decNumber_of_available_seats();
+        stats.incNumber_of_purchased_tickets();
+        stats.addCurrent_income(ticket.getTicket().getPrice());
         return new ResponseEntity(ticket, HttpStatus.OK);
     }
 
@@ -56,6 +56,17 @@ public class MovieTheatreController {
         }
         ticketList.remove(ticket);
         movieTheatre.addAvailable_seats(ticket.getTicket());
+        stats.incNumber_of_available_seats();
+        stats.decNumber_of_purchased_tickets();
+        stats.addCurrent_income(-ticket.getTicket().getPrice());
         return new ResponseEntity(Map.of("returned_ticket", ticket.getTicket()), HttpStatus.OK);
+    }
+
+    @PostMapping("/stats")
+    public ResponseEntity getStats(@RequestParam LinkedHashMap<String, String> password) {
+        if (!"super_secret".equals(password.get("password"))) {
+            return new ResponseEntity(Map.of("error", "The password is wrong!"), HttpStatus.UNAUTHORIZED);
+        }
+        return new ResponseEntity(stats, HttpStatus.OK);
     }
 }
