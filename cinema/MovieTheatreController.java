@@ -10,8 +10,8 @@ import java.util.*;
 @RestController
 public class MovieTheatreController {
     private final MovieTheatre movieTheatre = new MovieTheatre();
-    private List<Ticket> ticketList = new ArrayList<>();
-    private Stats stats = new Stats(movieTheatre.getTotal_columns() * movieTheatre.getTotal_rows());
+    private final List<Ticket> ticketList = new ArrayList<>();
+    private final Stats stats = new Stats(movieTheatre.getTotal_columns() * movieTheatre.getTotal_rows());
 
     public MovieTheatreController() {
     }
@@ -63,8 +63,8 @@ public class MovieTheatreController {
     }
 
     @PostMapping("/stats")
-    public ResponseEntity getStats(@RequestParam LinkedHashMap<String, String> password) {
-        if (!"super_secret".equals(password.get("password"))) {
+    public ResponseEntity getStats(@RequestParam(value = "password", required = false) String password) {
+        if (!"super_secret".equals(password)) {
             return new ResponseEntity(Map.of("error", "The password is wrong!"), HttpStatus.UNAUTHORIZED);
         }
         return new ResponseEntity(stats, HttpStatus.OK);
